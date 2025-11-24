@@ -1,0 +1,41 @@
+{
+  "name": "plaza-nadal-bot",
+  "version": "1.0.0",
+  "description": "Bot WhatsApp con IA para Plaza Nadal - Sistema de gestión gastronómica",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "build": "echo 'Build completed'",
+    "test": "echo 'Tests not implemented yet'"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "ai",
+    "gastronomia",
+    "plaza-nadal"
+  ],
+  "author": "Plaza Nadal Team",
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^3.3.2",
+    "openai": "^4.20.1",
+    "pg": "^8.11.3",
+    "puppeteer": "^24.31.0",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.23.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
