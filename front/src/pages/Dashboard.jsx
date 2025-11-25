@@ -1,66 +1,57 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getTodayOrders, getSystemStatus } from '../services/api';
+import axios from 'axios';
 import Header from '../components/Header';
+
+const API_URL = 'http://localhost:3007';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [orders, setOrders] = useState([]);
-  const [stats, setStats] = useState({
-    totalOrders: 0,
-    pendingOrders: 0,
-    completedOrders: 0,
-    totalRevenue: 0,
-  });
+  const [reservations, setReservations] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(true);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
-    loadData();
+    loadReservations();
     // Actualizar cada 30 segundos
-    const interval = setInterval(loadData, 30000);
+    const interval = setInterval(loadReservations, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedDate]);
 
-  const loadData = async () => {
+  const loadReservations = async () => {
     try {
-      const ordersData = await getTodayOrders();
-      if (ordersData.success) {
-        setOrders(ordersData.orders);
-        calculateStats(ordersData.orders);
+      const response = await axios.get(`${API_URL}/api/reservations?date=${selectedDate}`);
+      if (response.data.success) {
+        setReservations(response.data.reservations);
       }
     } catch (error) {
-      console.error('Error cargando datos:', error);
+      console.error('Error cargando reservas:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateStats = (ordersData) => {
-    const total = ordersData.length;
-    const pending = ordersData.filter(o => ['pending', 'confirmed', 'preparing'].includes(o.status)).length;
-    const completed = ordersData.filter(o => o.status === 'delivered').length;
-    const revenue = ordersData
-      .filter(o => o.status === 'delivered')
-      .reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
-
-    setStats({
-      totalOrders: total,
-      pendingOrders: pending,
-      completedOrders: completed,
-      totalRevenue: revenue,
-    });
+  const updateReservationStatus = async (id, newStatus) => {
+    try {
+      await axios.put(`${API_URL}/api/reservations/${id}/status`, { status: newStatus });
+      loadReservations();
+    } catch (error) {
+      console.error('Error actualizando reserva:', error);
+      alert('Error al actualizar la reserva');
+    }
   };
 
   const getStatusColor = (status) => {
     const colors = {
       pending: '#ff9800',
       confirmed: '#2196f3',
-      preparing: '#9c27b0',
-      ready: '#4caf50',
-      delivered: '#8bc34a',
+      seated: '#9c27b0',
+      completed: '#4caf50',
       cancelled: '#f44336',
+      no_show: '#666',
     };
     return colors[status] || '#666';
   };
@@ -69,12 +60,26 @@ const Dashboard = () => {
     const texts = {
       pending: 'Pendiente',
       confirmed: 'Confirmado',
-      preparing: 'Preparando',
-      ready: 'Listo',
-      delivered: 'Entregado',
+      seated: 'En Preparación',
+      completed: 'Entregado',
       cancelled: 'Cancelado',
+      no_show: 'No Retiró',
     };
     return texts[status] || status;
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-AR', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
+  const formatTime = (timeString) => {
+    return timeString.substring(0, 5); // HH:MM
   };
 
   return (
@@ -102,78 +107,182 @@ const Dashboard = () => {
         </div>
 
         <div className="content-area">
-          <div className="page-header">
-            <h1>Dashboard</h1>
-            <p>Bienvenido, {user?.first_name || 'Usuario'}</p>
-          </div>
-
-          {/* Estadísticas */}
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon" style={{ background: '#2196f3' }}>
-                <i className="fas fa-shopping-cart"></i>
-              </div>
-              <div className="stat-info">
-                <div className="stat-value">{stats.totalOrders}</div>
-                <div className="stat-label">Pedidos Hoy</div>
-              </div>
+          <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+            <div>
+              <h1 style={{ margin: '0 0 10px 0' }}>RESERVAS</h1>
+              <p style={{ margin: '0', color: '#666' }}>
+                {formatDate(selectedDate + 'T00:00:00')}
+              </p>
             </div>
-
-            <div className="stat-card">
-              <div className="stat-icon" style={{ background: '#ff9800' }}>
-                <i className="fas fa-clock"></i>
-              </div>
-              <div className="stat-info">
-                <div className="stat-value">{stats.pendingOrders}</div>
-                <div className="stat-label">Pendientes</div>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon" style={{ background: '#4caf50' }}>
-                <i className="fas fa-check-circle"></i>
-              </div>
-              <div className="stat-info">
-                <div className="stat-value">{stats.completedOrders}</div>
-                <div className="stat-label">Completados</div>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon" style={{ background: '#341656' }}>
-                <i className="fas fa-dollar-sign"></i>
-              </div>
-              <div className="stat-info">
-                <div className="stat-value">${stats.totalRevenue.toLocaleString()}</div>
-                <div className="stat-label">Ingresos Hoy</div>
-              </div>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <input 
+                type="date" 
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                style={{
+                  padding: '10px',
+                  fontSize: '16px',
+                  border: '2px solid #341656',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              />
+              <button 
+                onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                style={{
+                  padding: '10px 20px',
+                  background: '#341656',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Hoy
+              </button>
             </div>
           </div>
 
-          {/* Últimos Pedidos */}
+          {/* Lista de Reservas */}
           <div className="section">
-            <h2>Últimos Pedidos</h2>
             {loading ? (
-              <p>Cargando...</p>
-            ) : orders.length === 0 ? (
-              <p>No hay pedidos hoy</p>
+              <p>Cargando reservas...</p>
+            ) : reservations.length === 0 ? (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '40px', 
+                background: '#f5f5f5', 
+                borderRadius: '12px',
+                marginTop: '20px'
+              }}>
+                <i className="fas fa-calendar-times" style={{ fontSize: '48px', color: '#999', marginBottom: '16px' }}></i>
+                <p style={{ fontSize: '18px', color: '#666' }}>No hay reservas para esta fecha</p>
+              </div>
             ) : (
-              <div className="orders-list">
-                {orders.slice(0, 10).map((order) => (
-                  <div key={order.id} className="order-item">
-                    <div className="order-header">
-                      <span className="order-id">#{order.id}</span>
-                      <span 
-                        className="order-status"
-                        style={{ background: getStatusColor(order.status) }}
-                      >
-                        {getStatusText(order.status)}
-                      </span>
-                    </div>
-                    <div className="order-details">
-                      <p><strong>{order.customer_name}</strong></p>
-                      <p>{order.customer_phone}</p>
-                      <p className="order-amount">${parseFloat(order.total_amount).toLocaleString()}</p>
+              <div style={{ marginTop: '20px' }}>
+                {reservations.map((reservation) => (
+                  <div 
+                    key={reservation.id} 
+                    style={{
+                      background: 'white',
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      marginBottom: '16px',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ margin: '0 0 12px 0', fontSize: '20px', color: '#333' }}>
+                          {reservation.customer_name}
+                        </h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '12px' }}>
+                          <div>
+                            <p style={{ margin: '4px 0', color: '#666', fontSize: '14px' }}>
+                              <i className="fas fa-clock" style={{ marginRight: '8px', color: '#341656' }}></i>
+                              <strong>Hora de Retiro:</strong> {formatTime(reservation.reservation_time)}
+                            </p>
+                            <p style={{ margin: '4px 0', color: '#666', fontSize: '14px' }}>
+                              <i className="fas fa-box" style={{ marginRight: '8px', color: '#341656' }}></i>
+                              <strong>Cantidad:</strong> {reservation.number_of_people} {reservation.number_of_people === 1 ? 'unidad' : 'unidades'}
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ margin: '4px 0', color: '#666', fontSize: '14px' }}>
+                              <i className="fas fa-phone" style={{ marginRight: '8px', color: '#341656' }}></i>
+                              {reservation.customer_phone || 'Sin teléfono'}
+                            </p>
+                            {reservation.customer_email && (
+                              <p style={{ margin: '4px 0', color: '#666', fontSize: '14px' }}>
+                                <i className="fas fa-envelope" style={{ marginRight: '8px', color: '#341656' }}></i>
+                                {reservation.customer_email}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {reservation.notes && (
+                          <p style={{ 
+                            margin: '12px 0 0 0', 
+                            padding: '12px', 
+                            background: '#f9f9f9', 
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            color: '#555'
+                          }}>
+                            <i className="fas fa-sticky-note" style={{ marginRight: '8px', color: '#341656' }}></i>
+                            {reservation.notes}
+                          </p>
+                        )}
+                      </div>
+                      <div style={{ marginLeft: '20px' }}>
+                        <span 
+                          style={{
+                            background: getStatusColor(reservation.status),
+                            color: 'white',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontSize: '14px',
+                            fontWeight: 'bold',
+                            display: 'inline-block',
+                            marginBottom: '12px'
+                          }}
+                        >
+                          {getStatusText(reservation.status)}
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {reservation.status === 'confirmed' && (
+                            <button
+                              onClick={() => updateReservationStatus(reservation.id, 'seated')}
+                              style={{
+                                padding: '8px 16px',
+                                background: '#9c27b0',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '13px'
+                              }}
+                            >
+                              Preparar
+                            </button>
+                          )}
+                          {reservation.status === 'seated' && (
+                            <button
+                              onClick={() => updateReservationStatus(reservation.id, 'completed')}
+                              style={{
+                                padding: '8px 16px',
+                                background: '#4caf50',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '13px'
+                              }}
+                            >
+                              Entregar
+                            </button>
+                          )}
+                          {['pending', 'confirmed'].includes(reservation.status) && (
+                            <button
+                              onClick={() => updateReservationStatus(reservation.id, 'cancelled')}
+                              style={{
+                                padding: '8px 16px',
+                                background: '#f44336',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '13px'
+                              }}
+                            >
+                              Cancelar
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

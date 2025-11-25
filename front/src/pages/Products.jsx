@@ -75,12 +75,15 @@ const Products = () => {
 
     try {
       if (editingProduct) {
+        await axios.put(`${API_URL}/api/products/${editingProduct.id}`, formData);
         setMessage({ type: 'success', text: 'Producto actualizado correctamente' });
       } else {
+        await axios.post(`${API_URL}/api/products`, formData);
         setMessage({ type: 'success', text: 'Producto creado correctamente' });
       }
       setShowModal(false);
       loadProducts();
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     } catch (error) {
       setMessage({ 
         type: 'error', 
@@ -93,8 +96,10 @@ const Products = () => {
     if (!window.confirm('¿Estás seguro de eliminar este producto?')) return;
 
     try {
+      await axios.delete(`${API_URL}/api/products/${productId}`);
       setMessage({ type: 'success', text: 'Producto eliminado correctamente' });
       loadProducts();
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     } catch (error) {
       setMessage({ 
         type: 'error', 

@@ -18,9 +18,9 @@ const ChefPanel = () => {
     try {
       const data = await getTodayOrders();
       if (data.success) {
-        // Filtrar solo pedidos activos (no entregados ni cancelados)
+        // Filtrar solo pedidos confirmados que necesitan atención del cocinero
         const activeOrders = data.orders.filter(
-          o => !['delivered', 'cancelled'].includes(o.status)
+          o => ['confirmed', 'preparing', 'delayed'].includes(o.status)
         );
         setOrders(activeOrders);
       }
@@ -43,9 +43,9 @@ const ChefPanel = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      pending: '#ff9800',
       confirmed: '#2196f3',
       preparing: '#9c27b0',
+      delayed: '#ff5722',
       ready: '#4caf50',
     };
     return colors[status] || '#666';
@@ -53,32 +53,35 @@ const ChefPanel = () => {
 
   const getStatusText = (status) => {
     const texts = {
-      pending: 'Pendiente',
-      confirmed: 'Confirmado',
-      preparing: 'Preparando',
+      confirmed: 'Nuevo Pedido',
+      preparing: 'En Preparación',
+      delayed: 'Demorado',
       ready: 'Listo',
     };
     return texts[status] || status;
   };
 
-  const getNextStatus = (currentStatus) => {
-    const flow = {
-      pending: 'confirmed',
-      confirmed: 'preparing',
-      preparing: 'ready',
-      ready: 'delivered',
-    };
-    return flow[currentStatus];
-  };
 
-  const getNextStatusText = (currentStatus) => {
-    const texts = {
-      pending: 'Confirmar',
-      confirmed: 'Iniciar Preparación',
-      preparing: 'Marcar Listo',
-      ready: 'Marcar Entregado',
-    };
-    return texts[currentStatus];
+  const getActionButtons = (currentStatus) => {
+    if (currentStatus === 'confirmed') {
+      return [
+        { action: 'preparing', text: 'En Preparación', color: '#9c27b0' },
+        { action: 'delayed', text: 'Con Demora', color: '#ff5722' }
+      ];
+    }
+    if (currentStatus === 'preparing') {
+      return [
+        { action: 'ready', text: 'Listo', color: '#4caf50' },
+        { action: 'delayed', text: 'Con Demora', color: '#ff5722' }
+      ];
+    }
+    if (currentStatus === 'delayed') {
+      return [
+        { action: 'ready', text: 'Listo', color: '#4caf50' },
+        { action: 'preparing', text: 'En Preparación', color: '#9c27b0' }
+      ];
+    }
+    return [];
   };
 
   return (
@@ -142,59 +145,54 @@ const ChefPanel = () => {
                   </div>
 
                   <div style={{ marginBottom: '15px' }}>
-                    <p style={{ marginBottom: '8px' }}>
+                    <p style={{ marginBottom: '12px', fontSize: '1.1rem' }}>
                       <strong>Cliente:</strong> {order.customer_name}
                     </p>
-                    <p style={{ marginBottom: '8px' }}>
-                      <strong>Teléfono:</strong> {order.customer_phone}
-                    </p>
-                    <p style={{ marginBottom: '8px' }}>
-                      <strong>Tipo:</strong> {order.service_type === 'delivery' ? 'Delivery' : 'Retiro'}
-                    </p>
-                    {order.delivery_address && (
-                      <p style={{ marginBottom: '8px' }}>
-                        <strong>Dirección:</strong> {order.delivery_address}
-                      </p>
-                    )}
-                    <p style={{ marginBottom: '8px' }}>
-                      <strong>Pago:</strong> {order.payment_method}
-                    </p>
-                    <p style={{ fontSize: '1.2rem', fontWeight: 700, color: '#341656', marginTop: '10px' }}>
-                      Total: ${parseFloat(order.total_amount).toLocaleString()}
-                    </p>
+                    
+                    <div style={{ marginTop: '15px' }}>
+                      <strong style={{ display: 'block', marginBottom: '8px', fontSize: '1rem' }}>Productos:</strong>
+                      {order.items && order.items.length > 0 ? (
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                          {order.items.map((item, idx) => (
+                            <li key={idx} style={{ 
+                              padding: '8px 0', 
+                              borderBottom: idx < order.items.length - 1 ? '1px solid #eee' : 'none',
+                              fontSize: '0.95rem'
+                            }}>
+                              <span style={{ fontWeight: 600 }}>{item.quantity}x</span> {item.product_name}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p style={{ color: '#999', fontSize: '0.9rem' }}>Sin productos</p>
+                      )}
+                    </div>
                   </div>
 
-                  {order.notes && (
-                    <div style={{ 
-                      background: '#fff3cd', 
-                      padding: '10px', 
-                      borderRadius: '5px', 
-                      marginBottom: '15px',
-                      fontSize: '0.9rem'
-                    }}>
-                      <strong>Notas:</strong> {order.notes}
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => handleStatusChange(order.id, getNextStatus(order.status))}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: getStatusColor(order.status),
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                    }}
-                    onMouseOver={(e) => e.target.style.opacity = '0.8'}
-                    onMouseOut={(e) => e.target.style.opacity = '1'}
-                  >
-                    <i className="fas fa-arrow-right"></i> {getNextStatusText(order.status)}
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
+                    {getActionButtons(order.status).map((btn, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleStatusChange(order.id, btn.action)}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          background: btn.color,
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '1rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                        }}
+                        onMouseOver={(e) => e.target.style.opacity = '0.8'}
+                        onMouseOut={(e) => e.target.style.opacity = '1'}
+                      >
+                        <i className="fas fa-arrow-right"></i> {btn.text}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

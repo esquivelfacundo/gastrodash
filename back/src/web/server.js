@@ -75,11 +75,79 @@ class WebServer {
     // API: Obtener productos del menú (requiere autenticación)
     this.app.get('/api/products', authenticate, tenantContext, async (req, res) => {
       try {
-        const query = 'SELECT id, name, price, category FROM products WHERE tenant_id = $1 AND available = true ORDER BY category, name';
+        const query = 'SELECT * FROM products WHERE tenant_id = $1 ORDER BY category, name';
         const result = await pool.query(query, [req.tenantId]);
         res.json({ success: true, products: result.rows });
       } catch (error) {
         console.error('Error obteniendo productos:', error);
+        res.status(500).json({ success: false, error: 'Error interno del servidor' });
+      }
+    });
+
+    // API: Crear nuevo producto
+    this.app.post('/api/products', authenticate, tenantContext, async (req, res) => {
+      try {
+        const { name, description, price, category, available } = req.body;
+
+        if (!name || !price || !category) {
+          return res.status(400).json({ success: false, error: 'Faltan datos requeridos' });
+        }
+
+        const query = `
+          INSERT INTO products (tenant_id, name, description, price, category, available)
+          VALUES ($1, $2, $3, $4, $5, $6)
+          RETURNING *
+        `;
+        const values = [req.tenantId, name, description || null, price, category, available !== false];
+        const result = await pool.query(query, values);
+
+        res.json({ success: true, product: result.rows[0] });
+      } catch (error) {
+        console.error('Error creando producto:', error);
+        res.status(500).json({ success: false, error: 'Error interno del servidor' });
+      }
+    });
+
+    // API: Actualizar producto
+    this.app.put('/api/products/:id', authenticate, tenantContext, async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { name, description, price, category, available } = req.body;
+
+        const query = `
+          UPDATE products 
+          SET name = $1, description = $2, price = $3, category = $4, available = $5, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $6 AND tenant_id = $7
+          RETURNING *
+        `;
+        const values = [name, description || null, price, category, available !== false, id, req.tenantId];
+        const result = await pool.query(query, values);
+
+        if (result.rows.length === 0) {
+          return res.status(404).json({ success: false, error: 'Producto no encontrado' });
+        }
+
+        res.json({ success: true, product: result.rows[0] });
+      } catch (error) {
+        console.error('Error actualizando producto:', error);
+        res.status(500).json({ success: false, error: 'Error interno del servidor' });
+      }
+    });
+
+    // API: Eliminar producto
+    this.app.delete('/api/products/:id', authenticate, tenantContext, async (req, res) => {
+      try {
+        const { id } = req.params;
+        const query = 'DELETE FROM products WHERE id = $1 AND tenant_id = $2 RETURNING *';
+        const result = await pool.query(query, [id, req.tenantId]);
+
+        if (result.rows.length === 0) {
+          return res.status(404).json({ success: false, error: 'Producto no encontrado' });
+        }
+
+        res.json({ success: true, message: 'Producto eliminado' });
+      } catch (error) {
+        console.error('Error eliminando producto:', error);
         res.status(500).json({ success: false, error: 'Error interno del servidor' });
       }
     });
@@ -95,7 +163,17 @@ class WebServer {
           ORDER BY created_at DESC
         `;
         const result = await pool.query(query, [req.tenantId]);
-        res.json({ success: true, orders: result.rows });
+        
+        // Obtener items para cada pedido
+        const ordersWithItems = await Promise.all(
+          result.rows.map(async (order) => {
+            const itemsQuery = 'SELECT product_name, quantity, unit_price, subtotal FROM order_items WHERE order_id = $1 AND tenant_id = $2';
+            const itemsResult = await pool.query(itemsQuery, [order.id, req.tenantId]);
+            return { ...order, items: itemsResult.rows };
+          })
+        );
+        
+        res.json({ success: true, orders: ordersWithItems });
       } catch (error) {
         console.error('Error obteniendo pedidos:', error);
         res.status(500).json({ success: false, error: 'Error interno del servidor' });
@@ -134,7 +212,7 @@ class WebServer {
             delivery_address || null,
             payment_method,
             total_amount,
-            'pending'
+            'confirmed'
           ];
 
           const orderResult = await client.query(orderQuery, orderValues);
@@ -179,7 +257,7 @@ class WebServer {
         const { id } = req.params;
         const { status } = req.body;
 
-        if (!['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'].includes(status)) {
+        if (!['pending', 'confirmed', 'preparing', 'delayed', 'ready', 'delivered', 'cancelled'].includes(status)) {
           return res.status(400).json({ success: false, error: 'Estado inválido' });
         }
 
@@ -225,6 +303,108 @@ class WebServer {
         res.json({ success: true, summary: result.rows[0] });
       } catch (error) {
         console.error('Error obteniendo resumen contable:', error);
+        res.status(500).json({ success: false, error: 'Error interno del servidor' });
+      }
+    });
+
+    // API: Obtener reservas por fecha
+    this.app.get('/api/reservations', authenticate, tenantContext, async (req, res) => {
+      try {
+        const { date } = req.query;
+        const targetDate = date || new Date().toISOString().split('T')[0];
+        
+        const query = `
+          SELECT * FROM reservations 
+          WHERE tenant_id = $1 
+          AND reservation_date = $2 
+          ORDER BY reservation_time ASC
+        `;
+        const result = await pool.query(query, [req.tenantId, targetDate]);
+        res.json({ success: true, reservations: result.rows });
+      } catch (error) {
+        console.error('Error obteniendo reservas:', error);
+        res.status(500).json({ success: false, error: 'Error interno del servidor' });
+      }
+    });
+
+    // API: Crear nueva reserva
+    this.app.post('/api/reservations', authenticate, tenantContext, async (req, res) => {
+      try {
+        const { customer_name, customer_phone, customer_email, reservation_date, reservation_time, number_of_people, table_number, notes } = req.body;
+
+        if (!customer_name || !reservation_date || !reservation_time || !number_of_people) {
+          return res.status(400).json({ success: false, error: 'Faltan datos requeridos' });
+        }
+
+        const query = `
+          INSERT INTO reservations (
+            tenant_id, customer_name, customer_phone, customer_email,
+            reservation_date, reservation_time, number_of_people, table_number,
+            notes, created_by, status
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          RETURNING *
+        `;
+
+        const values = [
+          req.tenantId,
+          customer_name,
+          customer_phone || null,
+          customer_email || null,
+          reservation_date,
+          reservation_time,
+          number_of_people,
+          table_number || null,
+          notes || null,
+          req.user.id,
+          'confirmed'
+        ];
+
+        const result = await pool.query(query, values);
+        res.json({ success: true, reservation: result.rows[0] });
+      } catch (error) {
+        console.error('Error creando reserva:', error);
+        res.status(500).json({ success: false, error: 'Error interno del servidor' });
+      }
+    });
+
+    // API: Actualizar estado de reserva
+    this.app.put('/api/reservations/:id/status', authenticate, tenantContext, async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        if (!['pending', 'confirmed', 'seated', 'completed', 'cancelled', 'no_show'].includes(status)) {
+          return res.status(400).json({ success: false, error: 'Estado inválido' });
+        }
+
+        const query = 'UPDATE reservations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND tenant_id = $3 RETURNING *';
+        const result = await pool.query(query, [status, id, req.tenantId]);
+        
+        if (result.rows.length === 0) {
+          return res.status(404).json({ success: false, error: 'Reserva no encontrada' });
+        }
+
+        res.json({ success: true, reservation: result.rows[0] });
+      } catch (error) {
+        console.error('Error actualizando reserva:', error);
+        res.status(500).json({ success: false, error: 'Error interno del servidor' });
+      }
+    });
+
+    // API: Eliminar reserva
+    this.app.delete('/api/reservations/:id', authenticate, tenantContext, async (req, res) => {
+      try {
+        const { id } = req.params;
+        const query = 'DELETE FROM reservations WHERE id = $1 AND tenant_id = $2 RETURNING *';
+        const result = await pool.query(query, [id, req.tenantId]);
+        
+        if (result.rows.length === 0) {
+          return res.status(404).json({ success: false, error: 'Reserva no encontrada' });
+        }
+
+        res.json({ success: true, message: 'Reserva eliminada' });
+      } catch (error) {
+        console.error('Error eliminando reserva:', error);
         res.status(500).json({ success: false, error: 'Error interno del servidor' });
       }
     });

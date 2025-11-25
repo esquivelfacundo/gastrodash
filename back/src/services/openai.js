@@ -3,9 +3,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const openai = new OpenAI({
+// Inicializar OpenAI solo si hay API key
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
+}) : null;
 
 // Contexto del restaurante para la IA
 const RESTAURANT_CONTEXT = `
@@ -65,6 +66,10 @@ IMPORTANTE:
 
 export const generateAIResponse = async (userMessage, conversationHistory = []) => {
   try {
+    if (!openai) {
+      return 'Lo siento, el servicio de IA no está disponible en este momento. Por favor contacta directamente con el restaurante.';
+    }
+
     const messages = [
       { role: 'system', content: RESTAURANT_CONTEXT },
       ...conversationHistory,
@@ -88,6 +93,13 @@ export const generateAIResponse = async (userMessage, conversationHistory = []) 
 // Función para extraer información del pedido usando IA
 export const extractOrderInfo = async (conversationText) => {
   try {
+    if (!openai) {
+      return {
+        ready_to_process: false,
+        missing_info: ['Servicio de IA no disponible']
+      };
+    }
+
     const prompt = `
     Analiza la siguiente conversación y extrae la información del pedido en formato JSON.
     Si falta información importante, indica qué falta.

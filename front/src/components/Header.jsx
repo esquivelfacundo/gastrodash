@@ -52,7 +52,13 @@ const Header = () => {
   return (
     <div className="header">
       <div className="header-left">
-        <div className="logo">GastroDash</div>
+        <div 
+          className="logo" 
+          onClick={() => navigate('/dashboard')}
+          style={{ cursor: 'pointer' }}
+        >
+          GastroDash
+        </div>
         <div className="restaurant-name">{tenant?.name || 'Restaurante'}</div>
       </div>
 

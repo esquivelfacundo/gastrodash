@@ -181,85 +181,26 @@ export const initializeDatabase = async () => {
     const ingredientCount = await pool.query('SELECT COUNT(*) FROM ingredients');
     if (parseInt(ingredientCount.rows[0].count) === 0) {
       await pool.query(`
-        INSERT INTO ingredients (name, unit, current_stock, min_stock, max_stock, cost_per_unit, supplier) VALUES
-        ('Arroz', 'kg', 50.0, 10.0, 100.0, 1200.00, 'Proveedor Local'),
-        ('Pollo', 'kg', 25.0, 5.0, 50.0, 3500.00, 'Granja San Juan'),
-        ('Mariscos Mixtos', 'kg', 10.0, 2.0, 20.0, 8500.00, 'Pescadería del Puerto'),
-        ('Azafrán', 'gr', 100.0, 20.0, 200.0, 150.00, 'Especias Premium'),
-        ('Calamar', 'kg', 8.0, 2.0, 15.0, 4200.00, 'Pescadería del Puerto'),
-        ('Papa', 'kg', 30.0, 10.0, 60.0, 800.00, 'Verdulería Central'),
-        ('Huevo', 'unidades', 60.0, 12.0, 120.0, 45.00, 'Granja Los Álamos'),
-        ('Aceite', 'litros', 10.0, 2.0, 20.0, 2500.00, 'Distribuidora'),
-        ('Cebolla', 'kg', 15.0, 3.0, 30.0, 600.00, 'Verdulería Central'),
-        ('Ajo', 'kg', 2.0, 0.5, 5.0, 1800.00, 'Verdulería Central')
+        INSERT INTO ingredients (name, unit, stock_quantity, min_stock) VALUES
+        ('Arroz', 'kg', 50.0, 10.0),
+        ('Pollo', 'kg', 25.0, 5.0),
+        ('Mariscos Mixtos', 'kg', 10.0, 2.0),
+        ('Azafrán', 'gr', 100.0, 20.0),
+        ('Calamar', 'kg', 8.0, 2.0),
+        ('Papa', 'kg', 30.0, 10.0),
+        ('Huevo', 'unidades', 60.0, 12.0),
+        ('Aceite', 'litros', 10.0, 2.0),
+        ('Cebolla', 'kg', 15.0, 3.0),
+        ('Ajo', 'kg', 2.0, 0.5)
       `);
     }
 
     // Insertar recetas básicas si no existen
-    const recipeCount = await pool.query('SELECT COUNT(*) FROM recipes');
-    if (parseInt(recipeCount.rows[0].count) === 0) {
-      // Obtener IDs de productos e ingredientes
-      const products = await pool.query('SELECT id, name FROM products');
-      const ingredients = await pool.query('SELECT id, name FROM ingredients');
-      
-      const productMap = {};
-      const ingredientMap = {};
-      
-      products.rows.forEach(p => productMap[p.name] = p.id);
-      ingredients.rows.forEach(i => ingredientMap[i.name] = i.id);
-
-      // Recetas para cada plato
-      const recipes = [
-        // Arroz con Pollo
-        { product: 'Arroz con Pollo', ingredient: 'Arroz', quantity: 0.200 },
-        { product: 'Arroz con Pollo', ingredient: 'Pollo', quantity: 0.250 },
-        { product: 'Arroz con Pollo', ingredient: 'Aceite', quantity: 0.050 },
-        { product: 'Arroz con Pollo', ingredient: 'Cebolla', quantity: 0.100 },
-        { product: 'Arroz con Pollo', ingredient: 'Ajo', quantity: 0.010 },
-        
-        // Paella Tradicional
-        { product: 'Paella Tradicional', ingredient: 'Arroz', quantity: 0.200 },
-        { product: 'Paella Tradicional', ingredient: 'Mariscos Mixtos', quantity: 0.150 },
-        { product: 'Paella Tradicional', ingredient: 'Azafrán', quantity: 0.002 },
-        { product: 'Paella Tradicional', ingredient: 'Aceite', quantity: 0.050 },
-        { product: 'Paella Tradicional', ingredient: 'Ajo', quantity: 0.010 },
-        
-        // Paella Marinera
-        { product: 'Paella Marinera', ingredient: 'Arroz', quantity: 0.200 },
-        { product: 'Paella Marinera', ingredient: 'Mariscos Mixtos', quantity: 0.200 },
-        { product: 'Paella Marinera', ingredient: 'Azafrán', quantity: 0.002 },
-        { product: 'Paella Marinera', ingredient: 'Aceite', quantity: 0.050 },
-        { product: 'Paella Marinera', ingredient: 'Ajo', quantity: 0.010 },
-        
-        // Rabas
-        { product: 'Rabas', ingredient: 'Calamar', quantity: 0.300 },
-        { product: 'Rabas', ingredient: 'Aceite', quantity: 0.100 },
-        
-        // Tortilla de Papa
-        { product: 'Tortilla de Papa', ingredient: 'Papa', quantity: 0.400 },
-        { product: 'Tortilla de Papa', ingredient: 'Huevo', quantity: 3.000 },
-        { product: 'Tortilla de Papa', ingredient: 'Aceite', quantity: 0.050 },
-        { product: 'Tortilla de Papa', ingredient: 'Cebolla', quantity: 0.100 },
-        
-        // Tortilla Española
-        { product: 'Tortilla Española', ingredient: 'Papa', quantity: 0.400 },
-        { product: 'Tortilla Española', ingredient: 'Huevo', quantity: 3.000 },
-        { product: 'Tortilla Española', ingredient: 'Aceite', quantity: 0.050 },
-        { product: 'Tortilla Española', ingredient: 'Cebolla', quantity: 0.100 }
-      ];
-
-      for (const recipe of recipes) {
-        const productId = productMap[recipe.product];
-        const ingredientId = ingredientMap[recipe.ingredient];
-        
-        if (productId && ingredientId) {
-          await pool.query(`
-            INSERT INTO recipes (product_id, ingredient_id, quantity_needed) 
-            VALUES ($1, $2, $3)
-          `, [productId, ingredientId, recipe.quantity]);
-        }
-      }
-    }
+    // TODO: Implementar cuando se definan las columnas correctas de recipes
+    // const recipeCount = await pool.query('SELECT COUNT(*) FROM recipes');
+    // if (parseInt(recipeCount.rows[0].count) === 0) {
+    //   console.log('Recetas pendientes de implementar');
+    // }
 
     console.log('✅ Base de datos inicializada correctamente');
   } catch (error) {
