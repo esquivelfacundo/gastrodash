@@ -1,18 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import Header from '../components/Header';
+import DashboardLayout from '../components/DashboardLayout';
 
 const API_URL = 'http://localhost:3007';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
   const [reservations, setReservations] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(true);
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     loadReservations();
@@ -46,14 +41,14 @@ const Dashboard = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      pending: '#ff9800',
-      confirmed: '#2196f3',
-      seated: '#9c27b0',
-      completed: '#4caf50',
-      cancelled: '#f44336',
-      no_show: '#666',
+      pending: '#f59e0b',
+      confirmed: '#3b82f6',
+      seated: '#a855f7',
+      completed: '#10b981',
+      cancelled: '#ef4444',
+      no_show: '#6b7280',
     };
-    return colors[status] || '#666';
+    return colors[status] || '#6b7280';
   };
 
   const getStatusText = (status) => {
@@ -83,215 +78,188 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard-container">
-      <Header />
-      
-      <div className="main-content">
-        <div className="left-panel">
-          <h2>Navegación</h2>
-          <button className="nav-btn active" onClick={() => navigate('/dashboard')}>
-            <i className="fas fa-home"></i> Dashboard
-          </button>
-          <button className="nav-btn" onClick={() => navigate('/pedidos')}>
-            <i className="fas fa-shopping-cart"></i> Pedidos
-          </button>
-          <button className="nav-btn" onClick={() => navigate('/products')}>
-            <i className="fas fa-utensils"></i> Productos
-          </button>
-          <button className="nav-btn" onClick={() => navigate('/accounting')}>
-            <i className="fas fa-chart-line"></i> Contabilidad
-          </button>
-          <button className="nav-btn" onClick={() => navigate('/chef-panel')}>
-            <i className="fas fa-fire"></i> Panel Cocinero
-          </button>
-        </div>
-
-        <div className="content-area">
-          <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-            <div>
-              <h1 style={{ margin: '0 0 10px 0' }}>RESERVAS</h1>
-              <p style={{ margin: '0', color: '#666' }}>
-                {formatDate(selectedDate + 'T00:00:00')}
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <input 
-                type="date" 
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                style={{
-                  padding: '10px',
-                  fontSize: '16px',
-                  border: '2px solid #341656',
-                  borderRadius: '8px',
-                  cursor: 'pointer'
-                }}
-              />
-              <button 
-                onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                style={{
-                  padding: '10px 20px',
-                  background: '#341656',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                Hoy
-              </button>
-            </div>
-          </div>
-
-          {/* Lista de Reservas */}
-          <div className="section">
-            {loading ? (
-              <p>Cargando reservas...</p>
-            ) : reservations.length === 0 ? (
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '40px', 
-                background: '#f5f5f5', 
-                borderRadius: '12px',
-                marginTop: '20px'
-              }}>
-                <i className="fas fa-calendar-times" style={{ fontSize: '48px', color: '#999', marginBottom: '16px' }}></i>
-                <p style={{ fontSize: '18px', color: '#666' }}>No hay reservas para esta fecha</p>
+    <DashboardLayout>
+            <div className="page-header-with-actions">
+              <h1>Reservas</h1>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input 
+                  type="date" 
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  style={{
+                    padding: '10px',
+                    fontSize: '16px',
+                    border: '2px solid var(--primary-color)',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+                <button 
+                  onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                  style={{
+                    padding: '10px 20px',
+                    background: 'var(--primary-color)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Hoy
+                </button>
               </div>
-            ) : (
-              <div style={{ marginTop: '20px' }}>
-                {reservations.map((reservation) => (
-                  <div 
-                    key={reservation.id} 
-                    style={{
-                      background: 'white',
-                      border: '2px solid #e0e0e0',
-                      borderRadius: '12px',
-                      padding: '20px',
-                      marginBottom: '16px',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                      <div style={{ flex: 1 }}>
-                        <h3 style={{ margin: '0 0 12px 0', fontSize: '20px', color: '#333' }}>
-                          {reservation.customer_name}
-                        </h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '12px' }}>
-                          <div>
-                            <p style={{ margin: '4px 0', color: '#666', fontSize: '14px' }}>
-                              <i className="fas fa-clock" style={{ marginRight: '8px', color: '#341656' }}></i>
-                              <strong>Hora de Retiro:</strong> {formatTime(reservation.reservation_time)}
-                            </p>
-                            <p style={{ margin: '4px 0', color: '#666', fontSize: '14px' }}>
-                              <i className="fas fa-box" style={{ marginRight: '8px', color: '#341656' }}></i>
-                              <strong>Cantidad:</strong> {reservation.number_of_people} {reservation.number_of_people === 1 ? 'unidad' : 'unidades'}
-                            </p>
-                          </div>
-                          <div>
-                            <p style={{ margin: '4px 0', color: '#666', fontSize: '14px' }}>
-                              <i className="fas fa-phone" style={{ marginRight: '8px', color: '#341656' }}></i>
-                              {reservation.customer_phone || 'Sin teléfono'}
-                            </p>
-                            {reservation.customer_email && (
-                              <p style={{ margin: '4px 0', color: '#666', fontSize: '14px' }}>
-                                <i className="fas fa-envelope" style={{ marginRight: '8px', color: '#341656' }}></i>
-                                {reservation.customer_email}
+            </div>
+
+            {/* Lista de Reservas */}
+            <div className="section">
+              {loading ? (
+                <p>Cargando reservas...</p>
+              ) : reservations.length === 0 ? (
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '40px', 
+                  background: 'var(--bg-secondary)', 
+                  borderRadius: '12px',
+                  marginTop: '20px',
+                  border: '1px solid var(--border-color)'
+                }}>
+                  <i className="fas fa-calendar-times" style={{ fontSize: '48px', color: 'var(--text-secondary)', marginBottom: '16px' }}></i>
+                  <p style={{ fontSize: '18px', color: 'var(--text-secondary)' }}>No hay reservas para esta fecha</p>
+                </div>
+              ) : (
+                <div style={{ marginTop: '20px' }}>
+                  {reservations.map((reservation) => (
+                    <div 
+                      key={reservation.id} 
+                      style={{
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '12px',
+                        padding: '20px',
+                        marginBottom: '16px',
+                        boxShadow: 'var(--shadow)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                        <div style={{ flex: 1 }}>
+                          <h3 style={{ margin: '0 0 12px 0', fontSize: '20px', color: 'var(--text-primary)' }}>
+                            {reservation.customer_name}
+                          </h3>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '12px' }}>
+                            <div>
+                              <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                                <i className="fas fa-clock" style={{ marginRight: '8px', color: 'var(--primary-color)' }}></i>
+                                <strong>Hora de Retiro:</strong> {formatTime(reservation.reservation_time)}
                               </p>
+                              <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                                <i className="fas fa-box" style={{ marginRight: '8px', color: 'var(--primary-color)' }}></i>
+                                <strong>Cantidad:</strong> {reservation.number_of_people} {reservation.number_of_people === 1 ? 'unidad' : 'unidades'}
+                              </p>
+                            </div>
+                            <div>
+                              <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                                <i className="fas fa-phone" style={{ marginRight: '8px', color: 'var(--primary-color)' }}></i>
+                                {reservation.customer_phone || 'Sin teléfono'}
+                              </p>
+                              {reservation.customer_email && (
+                                <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                                  <i className="fas fa-envelope" style={{ marginRight: '8px', color: 'var(--primary-color)' }}></i>
+                                  {reservation.customer_email}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {reservation.notes && (
+                            <p style={{ 
+                              margin: '12px 0 0 0', 
+                              padding: '12px', 
+                              background: 'var(--bg-tertiary)', 
+                              borderRadius: '8px',
+                              fontSize: '14px',
+                              color: 'var(--text-secondary)'
+                            }}>
+                              <i className="fas fa-sticky-note" style={{ marginRight: '8px', color: 'var(--primary-color)' }}></i>
+                              {reservation.notes}
+                            </p>
+                          )}
+                        </div>
+                        <div style={{ marginLeft: '20px' }}>
+                          <span 
+                            style={{
+                              background: getStatusColor(reservation.status),
+                              color: 'white',
+                              padding: '8px 16px',
+                              borderRadius: '20px',
+                              fontSize: '14px',
+                              fontWeight: 'bold',
+                              display: 'inline-block',
+                              marginBottom: '12px'
+                            }}
+                          >
+                            {getStatusText(reservation.status)}
+                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {reservation.status === 'confirmed' && (
+                              <button
+                                onClick={() => updateReservationStatus(reservation.id, 'seated')}
+                                style={{
+                                  padding: '8px 16px',
+                                  background: 'var(--status-preparing)',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  fontSize: '13px'
+                                }}
+                              >
+                                Preparar
+                              </button>
+                            )}
+                            {reservation.status === 'seated' && (
+                              <button
+                                onClick={() => updateReservationStatus(reservation.id, 'completed')}
+                                style={{
+                                  padding: '8px 16px',
+                                  background: 'var(--status-ready)',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  fontSize: '13px'
+                                }}
+                              >
+                                Entregar
+                              </button>
+                            )}
+                            {['pending', 'confirmed'].includes(reservation.status) && (
+                              <button
+                                onClick={() => updateReservationStatus(reservation.id, 'cancelled')}
+                                style={{
+                                  padding: '8px 16px',
+                                  background: 'var(--status-cancelled)',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  fontSize: '13px'
+                                }}
+                              >
+                                Cancelar
+                              </button>
                             )}
                           </div>
                         </div>
-                        {reservation.notes && (
-                          <p style={{ 
-                            margin: '12px 0 0 0', 
-                            padding: '12px', 
-                            background: '#f9f9f9', 
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            color: '#555'
-                          }}>
-                            <i className="fas fa-sticky-note" style={{ marginRight: '8px', color: '#341656' }}></i>
-                            {reservation.notes}
-                          </p>
-                        )}
-                      </div>
-                      <div style={{ marginLeft: '20px' }}>
-                        <span 
-                          style={{
-                            background: getStatusColor(reservation.status),
-                            color: 'white',
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            fontSize: '14px',
-                            fontWeight: 'bold',
-                            display: 'inline-block',
-                            marginBottom: '12px'
-                          }}
-                        >
-                          {getStatusText(reservation.status)}
-                        </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {reservation.status === 'confirmed' && (
-                            <button
-                              onClick={() => updateReservationStatus(reservation.id, 'seated')}
-                              style={{
-                                padding: '8px 16px',
-                                background: '#9c27b0',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '13px'
-                              }}
-                            >
-                              Preparar
-                            </button>
-                          )}
-                          {reservation.status === 'seated' && (
-                            <button
-                              onClick={() => updateReservationStatus(reservation.id, 'completed')}
-                              style={{
-                                padding: '8px 16px',
-                                background: '#4caf50',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '13px'
-                              }}
-                            >
-                              Entregar
-                            </button>
-                          )}
-                          {['pending', 'confirmed'].includes(reservation.status) && (
-                            <button
-                              onClick={() => updateReservationStatus(reservation.id, 'cancelled')}
-                              style={{
-                                padding: '8px 16px',
-                                background: '#f44336',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '13px'
-                              }}
-                            >
-                              Cancelar
-                            </button>
-                          )}
-                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+    </DashboardLayout>
   );
 };
 

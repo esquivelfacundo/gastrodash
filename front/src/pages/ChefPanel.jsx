@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import DashboardLayout from '../components/DashboardLayout';
 import { getTodayOrders, updateOrderStatus } from '../services/api';
-import Header from '../components/Header';
 
 const ChefPanel = () => {
-  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -85,28 +84,10 @@ const ChefPanel = () => {
   };
 
   return (
-    <div className="dashboard-container">
-      <Header />
-      
-      <div className="main-content">
-        <div className="left-panel">
-          <h2>Navegación</h2>
-          <button className="nav-btn" onClick={() => navigate('/dashboard')}>
-            <i className="fas fa-home"></i> Dashboard
-          </button>
-          <button className="nav-btn" onClick={() => navigate('/pedidos')}>
-            <i className="fas fa-shopping-cart"></i> Pedidos
-          </button>
-          <button className="nav-btn active" onClick={() => navigate('/chef-panel')}>
-            <i className="fas fa-utensils"></i> Panel Cocinero
-          </button>
-        </div>
-
-        <div className="content-area">
-          <div className="page-header">
-            <h1>Panel del Cocinero</h1>
-            <p>Pedidos activos en tiempo real</p>
-          </div>
+    <DashboardLayout>
+      <div className="page-header">
+        <h1>Panel cocinero</h1>
+      </div>
 
           {loading ? (
             <p>Cargando pedidos...</p>
@@ -197,9 +178,7 @@ const ChefPanel = () => {
               ))}
             </div>
           )}
-        </div>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

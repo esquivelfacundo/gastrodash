@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import Header from '../components/Header';
+import axios from 'axios';
+import DashboardLayout from '../components/DashboardLayout';
 
 const Profile = () => {
   const { user, updateProfile, changePassword } = useAuth();
@@ -87,37 +88,33 @@ const Profile = () => {
   };
 
   return (
-    <div className="page-container">
-      <Header />
+    <DashboardLayout>
+      <div className="page-header">
+        <h1>Mi perfil</h1>
+      </div>
+
+      {message.text && (
+        <div className={`message ${message.type}`}>
+          {message.text}
+        </div>
+      )}
+
+      <div className="tabs-container">
+        <button 
+          className={`tab-btn ${activeTab === 'info' ? 'active' : ''}`}
+          onClick={() => setActiveTab('info')}
+        >
+          <i className="fas fa-user"></i> Información Personal
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'password' ? 'active' : ''}`}
+          onClick={() => setActiveTab('password')}
+        >
+          <i className="fas fa-lock"></i> Cambiar Contraseña
+        </button>
+      </div>
       
       <div className="content-wrapper">
-        <div className="page-header">
-          <h1>Mi Perfil</h1>
-          <p>Gestiona tu información personal y preferencias</p>
-        </div>
-
-        <div className="profile-container">
-          <div className="profile-tabs">
-            <button 
-              className={`tab ${activeTab === 'info' ? 'active' : ''}`}
-              onClick={() => setActiveTab('info')}
-            >
-              <i className="fas fa-user"></i> Información Personal
-            </button>
-            <button 
-              className={`tab ${activeTab === 'password' ? 'active' : ''}`}
-              onClick={() => setActiveTab('password')}
-            >
-              <i className="fas fa-lock"></i> Cambiar Contraseña
-            </button>
-          </div>
-
-          <div className="profile-content">
-            {message.text && (
-              <div className={`message ${message.type}`}>
-                {message.text}
-              </div>
-            )}
 
             {activeTab === 'info' && (
               <form className="profile-form" onSubmit={handleProfileSubmit}>
@@ -239,10 +236,8 @@ const Profile = () => {
                 </button>
               </form>
             )}
-          </div>
-        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

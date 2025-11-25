@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Header from '../components/Header';
+import DashboardLayout from '../components/DashboardLayout';
 
 const API_URL = 'http://localhost:3007';
 
@@ -382,20 +382,39 @@ const Pedidos = () => {
   };
 
   return (
-    <div className="page-container" style={{ background: '#f0f0f0', minHeight: '100vh' }}>
-      <Header />
+    <DashboardLayout>
+      <div className="page-header-with-actions">
+        <h1>Pedidos</h1>
+        <div className="page-header-actions">
+          <button
+            onClick={() => setShowNewOrderModal(true)}
+            className="btn-glassy primary"
+          >
+            <i className="fas fa-plus"></i>
+            Nuevo Pedido
+          </button>
+          <button
+            onClick={() => setShowNewReservaModal(true)}
+            className="btn-glassy"
+          >
+            <i className="fas fa-plus"></i>
+            Nueva Reserva
+          </button>
+        </div>
+      </div>
       
-      <div style={{ padding: '24px 40px', maxWidth: '100%', margin: '0 auto' }}>
+      <div>
         {/* Layout de dos columnas */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: '1fr 1px 450px', 
+          gridTemplateColumns: '1fr 1px 1fr', 
           gap: '0', 
           marginBottom: '24px',
-          background: 'white',
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-color)',
           borderRadius: '12px',
           overflow: 'hidden',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          boxShadow: 'var(--shadow)'
         }}>
           
           {/* Columna Izquierda - Pedidos */}
@@ -510,75 +529,6 @@ const Pedidos = () => {
               )}
             </div>
           </div>
-        </div>
-
-        {/* Línea divisoria horizontal */}
-        <div style={{ 
-          height: '1px', 
-          background: 'linear-gradient(to right, transparent, #d0d0d0 10%, #d0d0d0 90%, transparent)',
-          margin: '24px 0'
-        }}></div>
-
-        {/* Botones Inferiores */}
-        <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', padding: '20px 0' }}>
-          <button
-            onClick={() => setShowNewOrderModal(true)}
-            style={{
-              padding: '16px 50px',
-              background: '#341656',
-              color: 'white',
-              border: 'none',
-              borderRadius: '10px',
-              fontSize: '18px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              boxShadow: '0 3px 10px rgba(52, 22, 86, 0.25)',
-              transition: 'all 0.2s'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 5px 15px rgba(52, 22, 86, 0.35)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 3px 10px rgba(52, 22, 86, 0.25)';
-            }}
-          >
-            <i className="fas fa-plus" style={{ fontSize: '20px' }}></i>
-            Nuevo Pedido
-          </button>
-          <button
-            onClick={() => setShowNewReservaModal(true)}
-            style={{
-              padding: '16px 50px',
-              background: '#2196f3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '10px',
-              fontSize: '18px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              boxShadow: '0 3px 10px rgba(33, 150, 243, 0.25)',
-              transition: 'all 0.2s'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 5px 15px rgba(33, 150, 243, 0.35)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 3px 10px rgba(33, 150, 243, 0.25)';
-            }}
-          >
-            <i className="fas fa-plus" style={{ fontSize: '20px' }}></i>
-            Nueva Reserva
-          </button>
         </div>
       </div>
 
@@ -1320,7 +1270,7 @@ const Pedidos = () => {
           </div>
         </div>
       )}
-    </div>
+    </DashboardLayout>
   );
 };
 

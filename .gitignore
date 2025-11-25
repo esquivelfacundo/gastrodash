@@ -59,7 +59,6 @@ temp/
 # WhatsApp session
 .wwebjs_auth/
 .wwebjs_cache/
-.local-chromium/
 
 # PIDs
 *.pid
@@ -67,7 +66,3 @@ temp/
 # Misc
 .vercel
 .netlify
-
-# Package locks (opcional - descomentar si no quieres versionar)
-# package-lock.json
-# yarn.lock

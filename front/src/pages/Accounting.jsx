@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import Header from '../components/Header';
+import DashboardLayout from '../components/DashboardLayout';
 import PinProtection from '../components/PinProtection';
 
 const API_URL = 'http://localhost:3007';
@@ -42,15 +42,13 @@ const Accounting = () => {
   };
 
   return (
-    <div className="page-container">
-      <Header />
+    <DashboardLayout>
+      <div className="page-header">
+        <h1>Contabilidad</h1>
+      </div>
       
       <div className="content-wrapper">
         <PinProtection>
-          <div className="page-header">
-            <h1>Contabilidad</h1>
-            <p>Resumen financiero de tu restaurante</p>
-          </div>
 
           <div className="filters-card">
             <div className="form-row">
@@ -112,7 +110,7 @@ const Accounting = () => {
         )}
         </PinProtection>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

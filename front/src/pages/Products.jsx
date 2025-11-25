@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import Header from '../components/Header';
+import DashboardLayout from '../components/DashboardLayout';
 
 const API_URL = 'http://localhost:3007';
 
@@ -109,15 +109,13 @@ const Products = () => {
   };
 
   return (
-    <div className="page-container">
-      <Header />
+    <DashboardLayout>
+      <div className="page-header">
+        <h1>Productos</h1>
+      </div>
       
       <div className="content-wrapper">
-        <div className="page-header">
-          <div>
-            <h1>Productos</h1>
-            <p>Gestiona el menú de tu restaurante</p>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div className="header-actions">
             <div className="view-toggle">
               <button 
@@ -272,7 +270,7 @@ const Products = () => {
           </div>
         </div>
       )}
-    </div>
+    </DashboardLayout>
   );
 };
 

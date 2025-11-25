@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import Header from '../components/Header';
+import DashboardLayout from '../components/DashboardLayout';
 
 const API_URL = 'http://localhost:3007';
 
@@ -133,19 +133,15 @@ const Users = () => {
   };
 
   return (
-    <div className="page-container">
-      <Header />
+    <DashboardLayout>
+      <div className="page-header-with-actions">
+        <h1>Usuarios</h1>
+        <button className="btn-glassy primary" onClick={handleCreate}>
+          <i className="fas fa-plus"></i> Nuevo Usuario
+        </button>
+      </div>
       
       <div className="content-wrapper">
-        <div className="page-header">
-          <div>
-            <h1>Gestión de Usuarios</h1>
-            <p>Administra los usuarios de tu restaurante</p>
-          </div>
-          <button className="btn-primary" onClick={handleCreate}>
-            <i className="fas fa-plus"></i> Nuevo Usuario
-          </button>
-        </div>
 
         {message.text && (
           <div className={`message ${message.type}`}>
@@ -331,7 +327,7 @@ const Users = () => {
           </div>
         </div>
       )}
-    </div>
+    </DashboardLayout>
   );
 };
 

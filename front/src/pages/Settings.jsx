@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
-import Header from '../components/Header';
 
 const Settings = () => {
   const { tenant } = useAuth();
@@ -132,50 +134,45 @@ const Settings = () => {
   };
 
   return (
-    <div className="page-container">
-      <Header />
+    <DashboardLayout>
+      <div className="page-header">
+        <h1>Configuración</h1>
+      </div>
+
+      {message.text && (
+        <div className={`message ${message.type}`}>
+          {message.text}
+        </div>
+      )}
+
+      <div className="tabs-container">
+        <button 
+          className={`tab-btn ${activeTab === 'general' ? 'active' : ''}`}
+          onClick={() => setActiveTab('general')}
+        >
+          <i className="fas fa-cog"></i> General
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'whatsapp' ? 'active' : ''}`}
+          onClick={() => setActiveTab('whatsapp')}
+        >
+          <i className="fab fa-whatsapp"></i> WhatsApp & Meta
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'openai' ? 'active' : ''}`}
+          onClick={() => setActiveTab('openai')}
+        >
+          <i className="fas fa-robot"></i> OpenAI
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'schedule' ? 'active' : ''}`}
+          onClick={() => setActiveTab('schedule')}
+        >
+          <i className="fas fa-clock"></i> Horarios
+        </button>
+      </div>
       
       <div className="content-wrapper">
-        <div className="page-header">
-          <h1>Configuración</h1>
-          <p>Gestiona la configuración de tu restaurante</p>
-        </div>
-
-        {message.text && (
-          <div className={`message ${message.type}`}>
-            {message.text}
-          </div>
-        )}
-
-        <div className="settings-container">
-          <div className="settings-sidebar">
-            <button 
-              className={`tab ${activeTab === 'general' ? 'active' : ''}`}
-              onClick={() => setActiveTab('general')}
-            >
-              <i className="fas fa-cog"></i> General
-            </button>
-            <button 
-              className={`tab ${activeTab === 'whatsapp' ? 'active' : ''}`}
-              onClick={() => setActiveTab('whatsapp')}
-            >
-              <i className="fab fa-whatsapp"></i> WhatsApp & Meta
-            </button>
-            <button 
-              className={`tab ${activeTab === 'openai' ? 'active' : ''}`}
-              onClick={() => setActiveTab('openai')}
-            >
-              <i className="fas fa-robot"></i> OpenAI
-            </button>
-            <button 
-              className={`tab ${activeTab === 'schedule' ? 'active' : ''}`}
-              onClick={() => setActiveTab('schedule')}
-            >
-              <i className="fas fa-clock"></i> Horarios
-            </button>
-          </div>
-
-          <div className="settings-content">
             {activeTab === 'general' && (
               <form className="settings-form" onSubmit={handleGeneralSubmit}>
                 <h3>Información General</h3>
@@ -427,10 +424,8 @@ const Settings = () => {
                 </button>
               </form>
             )}
-          </div>
-        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
